@@ -1,0 +1,54 @@
+# Registrika - Apache security configuration
+# NOTE: GitHub Pages does NOT process .htaccess files. These rules apply only
+# when the site is hosted on an Apache server with the required modules enabled.
+
+# -----------------------------------------------------------------------------
+# Security headers
+# -----------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self'; upgrade-insecure-requests"
+    Header always unset X-Powered-By
+    Header always unset Server
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# HTTPS redirect (requires mod_rewrite and a valid TLS certificate)
+# -----------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# Prevent directory listing and access to common private/config files
+# -----------------------------------------------------------------------------
+Options -Indexes
+
+<FilesMatch "(?i)(^\.htaccess$|^\.htpasswd$|^\.env(\..*)?$|\.(bak|conf|dist|ini|log|old|orig|sql|swp|tmp)$|^(README|CHANGELOG|LICENSE)(\..*)?$)">
+    Require all denied
+</FilesMatch>
+
+# Do not expose Git metadata if it is ever accidentally deployed.
+RedirectMatch 404 ^/\.git(?:/|$)
+
+# -----------------------------------------------------------------------------
+# MIME types for static assets
+# -----------------------------------------------------------------------------
+<IfModule mod_mime.c>
+    AddType image/svg+xml .svg
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
+# -----------------------------------------------------------------------------
+# Compression (when mod_deflate is enabled)
+# -----------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
